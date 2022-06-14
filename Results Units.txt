@@ -1,0 +1,5 @@
+Production				Thousand Metric Tons
+Net Exports 				Thousand Metric Tons
+Area harvested				Thousand Hectares
+Price					USD/MT
+Per-Capita Food Consumption            	Kilograms
