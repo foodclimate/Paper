@@ -1,10 +1,11 @@
 #==================================================================================================
 # Title:                Food Climate Results
-# Date:                 14 June 2022
+# Date:                 10 August 2022
 #==================================================================================================
 rm(list=ls())
 library(openxlsx)
 library(ggpubr)
+library(ggbreak)
 library(reshape2)
 library(Hmisc)
 library(zoo)
@@ -12,6 +13,9 @@ library(gridExtra)
 library(svglite)
 #--------------------------------------------------------------------------------------------------
 load("FoodClimate.RData")
+#--------------------------------------------------------------------------------------------------
+lumdata$region[lumdata$region=="European Union (28)"]   = "EU"
+lumdata$region[lumdata$region=="European Union"]        = "EU"
 #==================================================================================================
 # Food Security: Per-capita food consumption and self-sufficiency ratio (SSR)
 # Source: https://fdc.nal.usda.gov/ (values per 100 g)
@@ -27,25 +31,8 @@ df                       = aggregate(df$value,FUN=sum,by=list(df$region,df$scena
 colnames(df)             = c("region","scenario","value")
 df$commodity             = "Aggregate (5 Grains)"
 df$item                  = "Per-Capita Food Consumption"
-#--------------------------------------------------------------------------------------------------
-#lumdata                  = subset(lumdata,item != "Per-Capita Food Consumption")
+lumdata                  = subset(lumdata,!(item=="Per-Capita Food Consumption"))
 lumdata                  = rbind(lumdata,df)
-#--------------------------------------------------------------------------------------------------
-df                       = subset(lumdata,
-                                  commodity %in% c("Barley","Maize","Rice","Sorghum","Wheat") &
-                                  item %in% c("Production","Net Exports"))
-df                       = merge(df,energy,by="commodity")
-df$value                 = df$value*df$energy
-df                       = aggregate(df$value,FUN=sum,by=list(df$region,df$scenario,df$item))
-colnames(df)             = c("region","scenario","item","value")
-df                       = dcast(df,region+scenario~item,value.var="value")
-df$ssr                   = 100*df$Production/(df$Production-df$`Net Exports`)
-df                       = df[c("region","scenario","ssr")]
-colnames(df)             = c("region","scenario","value")
-df$commodity             = "Aggregate (5 Grains)"
-df$item                  = "SSR"
-lumdata                  = rbind(lumdata,df)
-rm(df,energy)
 #--------------------------------------------------------------------------------------------------
 baseline                 = subset(lumdata,scenario=="Baseline",
                                   select=c("region","commodity","item","value"))
@@ -59,13 +46,13 @@ lumdata$change           = lumdata$value/lumdata$basevalue-1
 #--------------------------------------------------------------------------------------------------
 lumdata                  = na.omit(lumdata)
 rm(baseline,scenario)
-write.csv(lumdata,"foodcrisis.csv",row.names=FALSE)
+#write.csv(lumdata,"foodcrisis.csv",row.names=FALSE)
 #==================================================================================================
 # Price and Production Plot (Core Scenarios)
 #==================================================================================================
 df                       = subset(lumdata,
                                   item %in% c("Price","Production") &
-                                       region=="World" & commodity != "Sunflower" &
+                                       region=="World" & 
                                        scenario %in% core,
                                   select=c("commodity","scenario","change","item")) 
 #--------------------------------------------------------------------------------------------------
